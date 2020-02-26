@@ -1,3 +1,13 @@
-.o
-server/*.o
-client/*.o
+#executables
+**/*.exe
+
+#object files
+**/*.obj
+**/*.o
+
+#custom temporary files
+**/*.tmp
+**/*.stub
+**/*_stub/*
+**/*_stub*
+
