@@ -7,7 +7,14 @@
 
 #custom temporary files
 **/*.tmp
+**/*.tmp.c
 **/*.stub
-**/*_stub/*
+**/*_stub/
 **/*_stub*
+
+#my shell script
+compile.sh
+
+#my paths
+stubs/
 
