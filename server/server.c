@@ -58,7 +58,7 @@ void init_conversation(struct clinet_descriptor *client, const char client_no){
     client->serveraddr.sin_addr.s_addr = htonl(INADDR_ANY); 
 	client->serveraddr.sin_port = htons(PORT(client_no)); 
     
-    printf("Client %d has port %d", client_no, PORT(client_no));
+    printf("Client %d has port %d\n", client_no, PORT(client_no));
     
     /*
      * Bind the created socket to the ip, port etc
@@ -93,7 +93,7 @@ void init_conversation(struct clinet_descriptor *client, const char client_no){
     else
         printf("Server accepted the client %d and generated the client input/output file descriptor\n", client_no);
     
-    init_word[8] = client_no+1;
+    init_word[9] = client_no+1;
     write(client->iofd, init_word, sizeof(init_word));
 }
 
@@ -137,22 +137,45 @@ int has_win(char v[10]){
 
 void play_game(int player1fd, int player2fd){
     char cuvant[10];
+    int i;
+    
     bzero(cuvant, sizeof(cuvant));
     
     while(1){
         read(player1fd, cuvant, sizeof(cuvant));
         
+        printf("Player X has made the move: \n");
+        for(i=0; i<9; i++){
+            printf("%d ", cuvant[i]);
+            if(i%3==2) printf("\n");
+        }
+        printf("\t\t\t%d\n", cuvant[9]);
+        
         cuvant[9] = has_win(cuvant);
         
-        if(cuvant[9]) goto win_tag;
+        if(cuvant[9]){
+            printf("Player X won!\n");
+            goto win_tag;
+        }
         
         write(player2fd, cuvant, sizeof(cuvant));
         
         read(player2fd, cuvant, sizeof(cuvant));
         
+        printf("Player Y has made the move: \n");
+        for(i=0; i<9; i++){
+            printf("%d ", cuvant[i]);
+            if(i%3==2) printf("\n");
+        }
+        printf("\t\t\t%d\n", cuvant[9]);
+        
         cuvant[9] = has_win(cuvant);
         
-        if(cuvant[9]) goto win_tag;
+        if(cuvant[9]){
+            printf("Player Y won!\n");
+            goto win_tag;
+        }
+        
         
         write(player1fd, cuvant, sizeof(cuvant));
     }
@@ -179,6 +202,8 @@ int main(int argc, char**argv){
         close(client0.socketfd);
         bzero(&clientX, sizeof(clientX));
         bzero(&client0, sizeof(client0));
+        printf("\nReset players\n\n");
+        sleep(1);
     //}
     return 0;
     
