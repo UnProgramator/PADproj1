@@ -25,8 +25,8 @@
 
 // => porturile sunt 8080 si 8081
 #define PORT(deltaP) (8080+deltaP) 
-#define CLIENT_NO_1 0
-#define CLIENT_NO_2 1
+#define CLIENT_NO_X 0
+#define CLIENT_NO_0 1
 
 struct clinet_descriptor{
     int iofd; //file descriptor to be used with read and write
@@ -37,7 +37,10 @@ struct clinet_descriptor{
 };
 
 void init_conversation(struct clinet_descriptor *client, const char client_no){
-    static unsigned char init_word[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    static unsigned char init_word[] = {0, 0, 0, 
+                                        0, 0, 0, 
+                                        0, 0, 0, 
+                                                 0};
     /*
      * Creare socket
      * */
@@ -88,20 +91,95 @@ void init_conversation(struct clinet_descriptor *client, const char client_no){
         exit(4);
     }
     else
-        printf("Server accepted the cleint %d and generated the client input/output file descriptor\n", client_no);
+        printf("Server accepted the client %d and generated the client input/output file descriptor\n", client_no);
     
-    init_word[8] = client_no;
+    init_word[8] = client_no+1;
     write(client->iofd, init_word, sizeof(init_word));
 }
 
+/*
+ * 0 1 2
+ * 3 4 5
+ * 6 7 8
+ */
 
+
+int has_win(char v[10]){
+    int i;
+    /*
+     * Verific liniile si coloanele si diagonalele
+     * Daca gasesc ca exista o "linie" cu aceasi valoare, returnez acea valoare
+     */
+    if(v[0] && 
+        (v[0]==v[1]==v[2] || 
+         v[0]==v[4]==v[8] ||
+         v[0]==v[3]==v[6]))
+        return v[0];
+    if(v[4] &&
+        (v[1]==v[4]==v[7] ||
+         v[3]==v[4]==v[5] ||
+         v[2]==v[4]==v[6]))
+        return v[4];
+    if(v[8] &&
+        (v[6]==v[7]==v[8] ||
+         v[2]==v[5]==v[8]))
+        return v[8];
+    
+    /*
+     * Daca mai exista spatii cu 0 atunci se mai pot face miscari
+     * Altfel returnez codul pentru remiza care este 3
+     */
+    for(i=0; i<9; i++)
+        if(v[i]==0);
+            return 0;
+    return 3;
+}
+
+void play_game(int player1fd, int player2fd){
+    char cuvant[10];
+    bzero(cuvant, sizeof(cuvant));
+    
+    while(1){
+        read(player1fd, cuvant, sizeof(cuvant));
+        
+        cuvant[9] = has_win(cuvant);
+        
+        if(cuvant[9]) goto win_tag;
+        
+        write(player2fd, cuvant, sizeof(cuvant));
+        
+        read(player2fd, cuvant, sizeof(cuvant));
+        
+        cuvant[9] = has_win(cuvant);
+        
+        if(cuvant[9]) goto win_tag;
+        
+        write(player1fd, cuvant, sizeof(cuvant));
+    }
+    win_tag:
+        write(player1fd, cuvant, sizeof(cuvant));
+        write(player2fd, cuvant, sizeof(cuvant));
+}
 
 int main(int argc, char**argv){
     struct clinet_descriptor clientX, client0;
-    
-    init_conversation(&clientX, CLIENT_NO_1);
-    init_conversation(&client0, CLIENT_NO_2);
-    
-    
+    //while(1){
+        init_conversation(&clientX, CLIENT_NO_X);
+        init_conversation(&client0, CLIENT_NO_0);
+        
+        /*
+        * Prin conventie am ales "X" -> player 1 si "0" -> player 2
+        */
+        
+        play_game(clientX.iofd, client0.iofd);
+        
+        close(clientX.iofd);
+        close(client0.iofd);
+        close(clientX.socketfd);
+        close(client0.socketfd);
+        bzero(&clientX, sizeof(clientX));
+        bzero(&client0, sizeof(client0));
+    //}
+    return 0;
     
 }
