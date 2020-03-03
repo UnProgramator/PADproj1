@@ -186,25 +186,21 @@ void play_game(int player1fd, int player2fd){
 
 int main(int argc, char**argv){
     struct clinet_descriptor clientX, client0;
-    //while(1){
-        init_conversation(&clientX, CLIENT_NO_X);
-        init_conversation(&client0, CLIENT_NO_0);
+    
+    init_conversation(&clientX, CLIENT_NO_X);
+    init_conversation(&client0, CLIENT_NO_0);
         
         /*
         * Prin conventie am ales "X" -> player 1 si "0" -> player 2
         */
         
-        play_game(clientX.iofd, client0.iofd);
+    play_game(clientX.iofd, client0.iofd);
         
-        close(clientX.iofd);
-        close(client0.iofd);
-        close(clientX.socketfd);
-        close(client0.socketfd);
-        bzero(&clientX, sizeof(clientX));
-        bzero(&client0, sizeof(client0));
-        printf("\nReset players\n\n");
-        sleep(1);
-    //}
+    close(clientX.socketfd);
+    close(client0.socketfd);
+        
+    printf("Sesiune incheiata");
+    
     return 0;
     
 }
