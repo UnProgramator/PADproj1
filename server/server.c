@@ -28,6 +28,8 @@
 #define CLIENT_NO_X 0
 #define CLIENT_NO_0 1
 
+#define debug_messages_on 0
+
 struct clinet_descriptor{
     int iofd; //file descriptor to be used with read and write
     int socketfd; //socket file clinet_descriptor
@@ -37,10 +39,10 @@ struct clinet_descriptor{
 };
 
 void init_conversation(struct clinet_descriptor *client, const char client_no){
-    static unsigned char init_word[] = {0, 0, 0, 
+    static unsigned char init_word[] = {0,
                                         0, 0, 0, 
                                         0, 0, 0, 
-                                                 0};
+                                        0, 0, 0};
     /*
      * Creare socket
      * */
@@ -93,7 +95,7 @@ void init_conversation(struct clinet_descriptor *client, const char client_no){
     else
         printf("Server accepted the client %d and generated the client input/output file descriptor\n", client_no);
     
-    init_word[9] = client_no+1;
+    init_word[0] = client_no+1;
     write(client->iofd, init_word, sizeof(init_word));
 }
 
@@ -104,7 +106,7 @@ void init_conversation(struct clinet_descriptor *client, const char client_no){
  */
 
 
-int has_win(char v[10]){
+int has_win(char v[9]){
     int i;
     /*
      * Verific liniile si coloanele si diagonalele
@@ -135,44 +137,71 @@ int has_win(char v[10]){
     return 3;
 }
 
+int verify(char tabla[9]){
+    char oldT[9]={0,0,0, 0,0,0, 0,0,0};
+    int i, changes=0;
+    
+    for(i=0; i<9; i++){
+        if(oldT[i]==tabla[i]) continue;
+        changes++;
+        if(oldT[i]==0) continue;
+        
+        return 0;
+    }
+    
+    return (changes==1);
+    
+}
+
 void play_game(int player1fd, int player2fd){
     char cuvant[10];
+    char * tabla = &cuvant[1];
     int i;
     
     bzero(cuvant, sizeof(cuvant));
     
     while(1){
         read(player1fd, cuvant, sizeof(cuvant));
+
+        #if debug_messages == 1
+            printf("Player X has made the move: \n");
+            for(i=0; i<9; i++){
+                printf("%d ", tabla[i]);
+                if(i%3==2) printf("\n");
+            }
+            printf("\t\t\t%d\n", cuvant[0]);
+        #endif
         
-        printf("Player X has made the move: \n");
-        for(i=0; i<9; i++){
-            printf("%d ", cuvant[i]);
-            if(i%3==2) printf("\n");
-        }
-        printf("\t\t\t%d\n", cuvant[9]);
+        cuvant[0] = has_win(tabla);
         
-        cuvant[9] = has_win(cuvant);
-        
-        if(cuvant[9]){
-            printf("Player X won!\n");
+        if(cuvant[0]){
+            #if debug_messages == 1
+                printf("Player X won!\n");
+            #endif
+                
             goto win_tag;
         }
         
         write(player2fd, cuvant, sizeof(cuvant));
         
         read(player2fd, cuvant, sizeof(cuvant));
+    
+        #if debug_messages == 1
+            printf("Player Y has made the move: \n");
+            for(i=0; i<9; i++){
+                printf("%d ", tabla[i]);
+                if(i%3==2) printf("\n");
+            }
+            printf("\t\t\t%d\n", cuvant[0]);
+        #endif
         
-        printf("Player Y has made the move: \n");
-        for(i=0; i<9; i++){
-            printf("%d ", cuvant[i]);
-            if(i%3==2) printf("\n");
-        }
-        printf("\t\t\t%d\n", cuvant[9]);
+        cuvant[0] = has_win(tabla);
         
-        cuvant[9] = has_win(cuvant);
-        
-        if(cuvant[9]){
-            printf("Player Y won!\n");
+        if(cuvant[0]){
+            #if debug_messages == 1
+                printf("Player Y won!\n");
+            #endif
+            
             goto win_tag;
         }
         
