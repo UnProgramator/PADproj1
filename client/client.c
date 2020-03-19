@@ -3,50 +3,65 @@
 #include <stdlib.h> 
 #include <string.h> 
 #include <sys/socket.h> 
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 
+#include <unistd.h>
+
+#define MAX 80
 #define PORT_X 8080
 #define PORT_0 8081 
 #define SA struct sockaddr 
 
+int option;
 int connection=0;
+
+int sockfd, connfd; 
+
+	struct sockaddr_in servaddr, cli; 
+
 static unsigned char init_word[] = {0, 0, 0, 
                                     0, 0, 0, 
                                     0, 0, 0, 
                                     0};
-void func(int sockfd) 
+                                    
+void displayWinner();
+void display();
+void readFromTheKeyboard(int player);
+
+void func(int port) 
 { 
-	char buff[MAX]; 
-	int n; 
-	for (;;) { 
-		bzero(buff, sizeof(buff)); 
-		printf("Enter the string : "); 
-		n = 0; 
-		while ((buff[n++] = getchar()) != '\n') 
-			; 
-		write(sockfd, buff, sizeof(buff)); 
-		bzero(buff, sizeof(buff)); 
-		read(sockfd, buff, sizeof(buff)); 
-		printf("From Server : %s", buff); 
-		if ((strncmp(buff, "exit", 4)) == 0) { 
-			printf("Client Exit...\n"); 
-			break; 
+	while(1){
+		read(sockfd,init_word,MAX);
+		
+		displayWinner();
+
+		if(port==PORT_X){
+			read(sockfd,init_word,MAX);
+			readFromTheKeyboard(1);
+			write(sockfd,init_word,MAX);
+		}
+		else
+		{
+			read(sockfd,init_word,MAX);
+			readFromTheKeyboard(2);
+			write(sockfd,init_word,MAX);
 		} 
-	} 
+	}
+
 } 
 
-int connect(int port){
+int connectToServer(int port){
 	bzero(&servaddr, sizeof(servaddr)); 
 
 		// assign IP, PORT 
 		servaddr.sin_family = AF_INET; 
-		//////////////////////////////////////////////////
-		//////////////////////////////////////////////////
-		//IP UL TAU//////////////////////////////////////////
-		////////////////////////////////////////////
-		/////////////////////////////
+	
 		servaddr.sin_addr.s_addr = inet_addr("127.0.0.1"); 
-		servaddr.sin_port = htons(PORT); 
+		servaddr.sin_port = htons(port); 
+
+		connection=1;	
 
 		// connect the client socket to server socket 
 		if (connect(sockfd, (SA*)&servaddr, sizeof(servaddr)) != 0) { 
@@ -55,62 +70,83 @@ int connect(int port){
 		} 
 		else
 			printf("connected to the server..\n"); 
-
-		// function for chat 
-		func(sockfd); 
-
-		// close the socket 
-		close(sockfd);
-		connection=1;
 }
 
+
+
 void readFromTheKeyboard(int player){
-	printf("Enter option!");
-	scanf("%d", option);
-	if(init_word[option-1]==0){
-		init_word[option-1]=player;
-	}
+	int check=0;
+
+	display();
+
+	do{	
+		printf("Enter option!");
+		scanf("%d", &option);
+		if(init_word[option]==0){
+			init_word[option]=player;
+		check=1;
+		}
+	}while(check==0);
 }
 
 void displayWinner(){
-	if(init_word[9]==2){
-		printf("X wins");
-	}
-	if(init_word[9]==3){
-		printf("0 wins");
-	}
+	if(init_word[0]==3){
+			printf("X WINS\n");
+		}
+		
+		if(init_word[0]==4){
+			printf("0 WINS\n");
+		}
+		
+		if(init_word[0]==5){
+			printf("DRAW\n");
+		}
+}
+
+
+void display(){
+	int counter=1;
+    for (int i=0; i<3;i++){
+        printf("\n| ");
+        for(int j=0;j<3;j++){
+            if(init_word[counter]==1){
+                printf("X |");
+            }
+
+            if(init_word[counter]==2){
+                printf("O |");
+            }
+
+            if(init_word[counter]==0){
+                printf("N |");
+            }
+            counter++;
+        }
+    }
 }
 
 int main() 
 { 
-	int option;
-	int sockfd, connfd; 
-	struct sockaddr_in servaddr, cli; 
-
+	
 	// socket create and varification 
 	sockfd = socket(AF_INET, SOCK_STREAM, 0); 
 	if (sockfd == -1) { 
 		printf("Socket can't be created!\n"); 
 		exit(-1); 
 	} 
-	else
+	else{
 		printf("Socket created successfully!\n"); 
+	}
+
+	connectToServer(PORT_X);
 	if(connection==0){
-		connect(PORT_X);
-		while(1){
-			readFromTheKeyboard(1);
-			//METODA CU SERVERUL
-			displayWinner();
-		}
+		//METODA CU SERVERUL
+		func(PORT_X);
 	}
 	else{
-		connect(PORT_0);
-		connection=0;
-		while(1){
-			readFromTheKeyboard(2);
-			//METODA CU SERVERUL
-			displayWinner();
+		connectToServer(PORT_0);
+		//METODA CU SERVERUL
+		func(PORT_0);
 		}
-	}
 	
 } 

@@ -116,16 +116,16 @@ int has_win(char v[9]){
         (v[0]==v[1]==v[2] || 
          v[0]==v[4]==v[8] ||
          v[0]==v[3]==v[6]))
-        return v[0];
+        return v[0]+2; //1+2 = 3 pt x, 2+2=4 pt y
     if(v[4] &&
         (v[1]==v[4]==v[7] ||
          v[3]==v[4]==v[5] ||
          v[2]==v[4]==v[6]))
-        return v[4];
+        return v[4]+2;
     if(v[8] &&
         (v[6]==v[7]==v[8] ||
          v[2]==v[5]==v[8]))
-        return v[8];
+        return v[8]+2;
     
     /*
      * Daca mai exista spatii cu 0 atunci se mai pot face miscari
@@ -134,23 +134,7 @@ int has_win(char v[9]){
     for(i=0; i<9; i++)
         if(v[i]==0);
             return 0;
-    return 3;
-}
-
-int verify(char tabla[9]){
-    char oldT[9]={0,0,0, 0,0,0, 0,0,0};
-    int i, changes=0;
-    
-    for(i=0; i<9; i++){
-        if(oldT[i]==tabla[i]) continue;
-        changes++;
-        if(oldT[i]==0) continue;
-        
-        return 0;
-    }
-    
-    return (changes==1);
-    
+    return 5;
 }
 
 void play_game(int player1fd, int player2fd){
