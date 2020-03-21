@@ -28,7 +28,7 @@
 #define CLIENT_NO_X 0
 #define CLIENT_NO_0 1
 
-#define debug_messages_on 0
+#define debug_messages 1
 
 struct clinet_descriptor{
     int iofd; //file descriptor to be used with read and write
@@ -95,37 +95,38 @@ void init_conversation(struct clinet_descriptor *client, const char client_no){
     else
         printf("Server accepted the client %d and generated the client input/output file descriptor\n", client_no);
     
+    printf("\n");
     init_word[0] = client_no+1;
     write(client->iofd, init_word, sizeof(init_word));
 }
 
 /*
- * 0 1 2
- * 3 4 5
- * 6 7 8
+ * 1 2 3
+ * 4 5 6
+ * 7 8 9
  */
 
 
-int has_win(char v[9]){
+int has_win(const char v[]){
     int i;
     /*
      * Verific liniile si coloanele si diagonalele
      * Daca gasesc ca exista o "linie" cu aceasi valoare, returnez acea valoare
      */
-    if(v[0] && 
-        (v[0]==v[1]==v[2] || 
-         v[0]==v[4]==v[8] ||
-         v[0]==v[3]==v[6]))
-        return v[0]+2; //1+2 = 3 pt x, 2+2=4 pt y
-    if(v[4] &&
-        (v[1]==v[4]==v[7] ||
-         v[3]==v[4]==v[5] ||
-         v[2]==v[4]==v[6]))
-        return v[4]+2;
-    if(v[8] &&
-        (v[6]==v[7]==v[8] ||
-         v[2]==v[5]==v[8]))
-        return v[8]+2;
+    if(v[1]!=0 && 
+        ((v[1]==v[2] && v[1]==v[3]) || 
+         (v[1]==v[5] && v[1]==v[9]) ||
+         (v[1]==v[4] && v[1]==v[7])))
+        return v[1]+2; //1+2 = 3 pt x, 2+2=4 pt y
+    if(v[5]!=0 &&
+        ((v[3]==v[5] && v[5]==v[7]) ||
+         (v[4]==v[5] && v[5]==v[6]) ||
+         (v[2]==v[5] && v[5]==v[8])))
+        return v[5]+2;
+    if(v[9]!=0 &&
+        ((v[7]==v[9] && v[8]==v[9]) ||
+         (v[3]==v[9] && v[6]==v[9])))
+        return v[9]+2;
     
     /*
      * Daca mai exista spatii cu 0 atunci se mai pot face miscari
@@ -139,7 +140,9 @@ int has_win(char v[9]){
 
 void play_game(int player1fd, int player2fd){
     char cuvant[10];
-    char * tabla = &cuvant[1];
+#if debug_messages == 1
+    char *tabla = cuvant+1;
+#endif
     int i;
     
     bzero(cuvant, sizeof(cuvant));
@@ -156,7 +159,7 @@ void play_game(int player1fd, int player2fd){
             printf("\t\t\t%d\n", cuvant[0]);
         #endif
         
-        cuvant[0] = has_win(tabla);
+        cuvant[0] = has_win(cuvant);
         
         if(cuvant[0]){
             #if debug_messages == 1
@@ -179,7 +182,7 @@ void play_game(int player1fd, int player2fd){
             printf("\t\t\t%d\n", cuvant[0]);
         #endif
         
-        cuvant[0] = has_win(tabla);
+        cuvant[0] = has_win(cuvant);
         
         if(cuvant[0]){
             #if debug_messages == 1

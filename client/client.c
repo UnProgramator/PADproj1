@@ -9,7 +9,7 @@
 
 #include <unistd.h>
 
-#define MAX 80
+#define MAX sizeof(init_word)
 #define PORT_X 8080
 #define PORT_0 8081 
 #define SA struct sockaddr 
@@ -19,7 +19,7 @@ int connection=0;
 
 int sockfd, connfd; 
 
-	struct sockaddr_in servaddr, cli; 
+struct sockaddr_in servaddr, cli; 
 
 static unsigned char init_word[] = {0, 0, 0, 
                                     0, 0, 0, 
@@ -30,46 +30,46 @@ void displayWinner();
 void display();
 void readFromTheKeyboard(int player);
 
-void func(int port) 
+void func() 
 { 
-	while(1){
-		read(sockfd,init_word,MAX);
-		
-		displayWinner();
+	read(sockfd,init_word,MAX);
 
-		if(port==PORT_X){
-			read(sockfd,init_word,MAX);
+    if(init_word[0]==1){
+		while(1){			
 			readFromTheKeyboard(1);
+			display();
 			write(sockfd,init_word,MAX);
-		}
-		else
-		{
+            printf("Wait for the other player\n");
 			read(sockfd,init_word,MAX);
-			readFromTheKeyboard(2);
-			write(sockfd,init_word,MAX);
-		} 
+			displayWinner();					
+		}
 	}
+	else
+	{
+		while(1){
+			read(sockfd,init_word,MAX);
+			displayWinner();
+			readFromTheKeyboard(2);
+			display();
+			write(sockfd,init_word,MAX);
+		}		
+	}
+}
 
-} 
-
-int connectToServer(int port){
+void connectToServer(int port){
 	bzero(&servaddr, sizeof(servaddr)); 
 
-		// assign IP, PORT 
-		servaddr.sin_family = AF_INET; 
+	// assign IP, PORT 
+	servaddr.sin_family = AF_INET; 
 	
-		servaddr.sin_addr.s_addr = inet_addr("127.0.0.1"); 
-		servaddr.sin_port = htons(port); 
+	servaddr.sin_addr.s_addr = inet_addr("127.0.0.1"); 
+	servaddr.sin_port = htons(port); 
 
-		connection=1;	
-
-		// connect the client socket to server socket 
-		if (connect(sockfd, (SA*)&servaddr, sizeof(servaddr)) != 0) { 
-			printf("connection with the server failed...\n"); 
-			exit(0); 
-		} 
-		else
-			printf("connected to the server..\n"); 
+	// connect the client socket to server socket 
+	if (connect(sockfd, (SA*)&servaddr, sizeof(servaddr)) != 0) { 
+		//printf("connection with the server failed...\n");
+        connection=1;	
+	} 
 }
 
 
@@ -82,9 +82,9 @@ void readFromTheKeyboard(int player){
 	do{	
 		printf("Enter option!");
 		scanf("%d", &option);
-		if(init_word[option]==0){
-			init_word[option]=player;
-		check=1;
+		if(option>=0 && option<=9 && init_word[option]==0){
+			init_word[option]=(char)player;
+			check=1;
 		}
 	}while(check==0);
 }
@@ -92,15 +92,18 @@ void readFromTheKeyboard(int player){
 void displayWinner(){
 	if(init_word[0]==3){
 			printf("X WINS\n");
-		}
+			exit(0);
+	}
 		
-		if(init_word[0]==4){
-			printf("0 WINS\n");
-		}
+	if(init_word[0]==4){
+		printf("0 WINS\n");
+		exit(0);
+	}
 		
-		if(init_word[0]==5){
-			printf("DRAW\n");
-		}
+	if(init_word[0]==5){
+		printf("DRAW\n");
+		exit(0);		
+	}	
 }
 
 
@@ -123,9 +126,10 @@ void display(){
             counter++;
         }
     }
+    printf("\n");
 }
 
-int main() 
+int main(int argc, char**argv) 
 { 
 	
 	// socket create and varification 
@@ -138,15 +142,9 @@ int main()
 		printf("Socket created successfully!\n"); 
 	}
 
-	connectToServer(PORT_X);
-	if(connection==0){
-		//METODA CU SERVERUL
-		func(PORT_X);
-	}
-	else{
-		connectToServer(PORT_0);
-		//METODA CU SERVERUL
-		func(PORT_0);
-		}
 	
+	
+	connectToServer(atoi(argv[1]));
+	
+	func();
 } 
